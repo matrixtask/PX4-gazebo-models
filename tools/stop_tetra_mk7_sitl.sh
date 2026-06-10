@@ -12,10 +12,10 @@ PX4_ROOT="$(cd -- "${GZ_ROOT}/../../.." && pwd)"
 declare -a NEEDLES=(
   "make px4_sitl ${SIM_MODEL}"
   "PX4_SIM_MODEL=${SIM_MODEL}"
-  "${PX4_ROOT}/build/px4_sitl_default/bin/px4"
   "${GZ_ROOT}/worlds/default.sdf"
 )
 
+declare -a SEED_PIDS=()
 declare -a PIDS=()
 
 if command -v tmux >/dev/null 2>&1; then
@@ -29,7 +29,7 @@ fi
 
 for needle in "${NEEDLES[@]}"; do
   while IFS= read -r pid; do
-    PIDS+=("${pid}")
+    SEED_PIDS+=("${pid}")
   done < <(
     ps -eo pid=,args= \
       | awk -v needle="${needle}" -v self="$$" '
@@ -37,6 +37,31 @@ for needle in "${NEEDLES[@]}"; do
             print $1
           }'
   )
+done
+
+for env_file in /proc/[0-9]*/environ; do
+  [ -r "${env_file}" ] || continue
+  if tr '\0' '\n' < "${env_file}" 2>/dev/null | grep -qx "PX4_SIM_MODEL=${SIM_MODEL}"; then
+    env_pid="${env_file#/proc/}"
+    env_pid="${env_pid%/environ}"
+    SEED_PIDS+=("${env_pid}")
+  fi
+done
+
+collect_descendants() {
+  local parent="$1"
+  local child
+
+  printf "%s\n" "${parent}"
+  while IFS= read -r child; do
+    collect_descendants "${child}"
+  done < <(ps -eo pid=,ppid= | awk -v ppid="${parent}" '$2 == ppid { print $1 }')
+}
+
+for pid in "${SEED_PIDS[@]}"; do
+  while IFS= read -r descendant; do
+    PIDS+=("${descendant}")
+  done < <(collect_descendants "${pid}")
 done
 
 if [ "${#PIDS[@]}" -eq 0 ]; then
