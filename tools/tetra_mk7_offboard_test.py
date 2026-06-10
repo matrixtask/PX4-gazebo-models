@@ -11,16 +11,20 @@ def wait_message(master, msg_type, timeout=5.0):
     return master.recv_match(type=msg_type, blocking=True, timeout=timeout)
 
 
-def send_position(master, x_m, y_m, z_m, yaw_rad):
+def send_setpoint(master, x_m, y_m, z_m, yaw_rad, vx_m_s=0.0, vy_m_s=0.0, vz_m_s=0.0,
+                  ax_m_s2=0.0, ay_m_s2=0.0, az_m_s2=0.0, use_feedforward=False):
     type_mask = (
-        mavutil.mavlink.POSITION_TARGET_TYPEMASK_VX_IGNORE
-        | mavutil.mavlink.POSITION_TARGET_TYPEMASK_VY_IGNORE
-        | mavutil.mavlink.POSITION_TARGET_TYPEMASK_VZ_IGNORE
-        | mavutil.mavlink.POSITION_TARGET_TYPEMASK_AX_IGNORE
-        | mavutil.mavlink.POSITION_TARGET_TYPEMASK_AY_IGNORE
-        | mavutil.mavlink.POSITION_TARGET_TYPEMASK_AZ_IGNORE
-        | mavutil.mavlink.POSITION_TARGET_TYPEMASK_YAW_RATE_IGNORE
+        mavutil.mavlink.POSITION_TARGET_TYPEMASK_YAW_RATE_IGNORE
     )
+    if not use_feedforward:
+        type_mask |= (
+            mavutil.mavlink.POSITION_TARGET_TYPEMASK_VX_IGNORE
+            | mavutil.mavlink.POSITION_TARGET_TYPEMASK_VY_IGNORE
+            | mavutil.mavlink.POSITION_TARGET_TYPEMASK_VZ_IGNORE
+            | mavutil.mavlink.POSITION_TARGET_TYPEMASK_AX_IGNORE
+            | mavutil.mavlink.POSITION_TARGET_TYPEMASK_AY_IGNORE
+            | mavutil.mavlink.POSITION_TARGET_TYPEMASK_AZ_IGNORE
+        )
     master.mav.set_position_target_local_ned_send(
         int(time.time() * 1e3) & 0xFFFFFFFF,
         master.target_system,
@@ -30,12 +34,12 @@ def send_position(master, x_m, y_m, z_m, yaw_rad):
         x_m,
         y_m,
         z_m,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        vx_m_s,
+        vy_m_s,
+        vz_m_s,
+        ax_m_s2,
+        ay_m_s2,
+        az_m_s2,
         yaw_rad,
         0.0,
     )
@@ -73,8 +77,49 @@ def run_segment(master, duration_s, target_fn, rate_hz=20.0):
     dt = 1.0 / rate_hz
     end_time = time.monotonic() + duration_s
     while time.monotonic() < end_time:
-        send_position(master, *target_fn(time.monotonic()))
+        send_setpoint(master, *target_fn(time.monotonic()))
         time.sleep(dt)
+
+
+def trapezoid_profile(distance_m, speed_m_s, accel_m_s2):
+    speed_m_s = max(speed_m_s, 0.1)
+    accel_m_s2 = max(accel_m_s2, 0.1)
+    t_accel = speed_m_s / accel_m_s2
+    d_accel = 0.5 * accel_m_s2 * t_accel * t_accel
+
+    if 2.0 * d_accel > distance_m:
+        t_accel = math.sqrt(distance_m / accel_m_s2)
+        speed_m_s = accel_m_s2 * t_accel
+        t_cruise = 0.0
+        d_accel = 0.5 * accel_m_s2 * t_accel * t_accel
+    else:
+        t_cruise = (distance_m - 2.0 * d_accel) / speed_m_s
+
+    total = 2.0 * t_accel + t_cruise
+
+    def sample(elapsed_s):
+        t = min(max(elapsed_s, 0.0), total)
+
+        if t < t_accel:
+            acc = accel_m_s2
+            vel = acc * t
+            pos = 0.5 * acc * t * t
+        elif t < t_accel + t_cruise:
+            acc = 0.0
+            vel = speed_m_s
+            pos = d_accel + speed_m_s * (t - t_accel)
+        else:
+            td = t - t_accel - t_cruise
+            acc = -accel_m_s2
+            vel = max(speed_m_s - accel_m_s2 * td, 0.0)
+            pos = d_accel + speed_m_s * t_cruise + speed_m_s * td - 0.5 * accel_m_s2 * td * td
+
+        if t >= total:
+            return distance_m, 0.0, 0.0
+
+        return min(pos, distance_m), vel, acc
+
+    return total, sample
 
 
 def main():
@@ -83,6 +128,8 @@ def main():
     parser.add_argument("--alt", type=float, default=3.0)
     parser.add_argument("--forward", type=float, default=30.0)
     parser.add_argument("--speed", type=float, default=0.6)
+    parser.add_argument("--accel", type=float, default=0.6)
+    parser.add_argument("--profile", choices=["smoothstep", "trapezoid"], default="smoothstep")
     parser.add_argument("--initial-hold", type=float, default=25.0)
     parser.add_argument("--final-hold", type=float, default=25.0)
     parser.add_argument("--rate", type=float, default=80.0)
@@ -101,7 +148,7 @@ def main():
 
     # PX4 requires a short stream of setpoints before OFFBOARD can be entered.
     for _ in range(60):
-        send_position(master, 0.0, 0.0, -args.alt, 0.0)
+        send_setpoint(master, 0.0, 0.0, -args.alt, 0.0)
         time.sleep(0.05)
 
     set_mode(master, "OFFBOARD")
@@ -113,13 +160,20 @@ def main():
 
     print(f"move forward {args.forward} m")
     move_start = time.monotonic()
-    move_duration = max(args.forward / max(args.speed, 0.1), 1.0)
+    if args.profile == "trapezoid":
+        move_duration, sample_profile = trapezoid_profile(args.forward, args.speed, args.accel)
 
-    def ramp_target(now):
-        progress = min(max((now - move_start) / move_duration, 0.0), 1.0)
-        # Smoothstep to avoid a hard step in position demand.
-        s = progress * progress * (3.0 - 2.0 * progress)
-        return (args.forward * s, 0.0, -args.alt, 0.0)
+        def ramp_target(now):
+            x, vx, ax = sample_profile(now - move_start)
+            return (x, 0.0, -args.alt, 0.0, vx, 0.0, 0.0, ax, 0.0, 0.0, True)
+    else:
+        move_duration = max(args.forward / max(args.speed, 0.1), 1.0)
+
+        def ramp_target(now):
+            progress = min(max((now - move_start) / move_duration, 0.0), 1.0)
+            # Smoothstep to avoid a hard step in position demand.
+            s = progress * progress * (3.0 - 2.0 * progress)
+            return (args.forward * s, 0.0, -args.alt, 0.0)
 
     run_segment(master, move_duration, ramp_target, args.rate)
 
