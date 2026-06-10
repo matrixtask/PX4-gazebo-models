@@ -1,0 +1,122 @@
+// Generate a first-order OpenVSP/VSPAERO model for teTra Mk-7 EM2.
+//
+// Coordinates:
+//   OpenVSP +X is aft, +Y follows the SDF Y axis, +Z is up.
+//   The model origin is the forward 41% MAC CG reference.
+//   Conversion from the current Gazebo SDF is:
+//     x_vsp = -x_sdf
+//     y_vsp =  y_sdf
+//     z_vsp =  z_sdf + 0.2
+
+void SetRectWing( string id, string name, double x_le, double y, double z,
+                  double semi_span, double chord, double thick_chord,
+                  int sym_flag )
+{
+    SetGeomName( id, name );
+    SetDriverGroup( id, 1, SPAN_WSECT_DRIVER, ROOTC_WSECT_DRIVER, TIPC_WSECT_DRIVER );
+    SetParmVal( id, "X_Rel_Location", "XForm", x_le );
+    SetParmVal( id, "Y_Rel_Location", "XForm", y );
+    SetParmVal( id, "Z_Rel_Location", "XForm", z );
+    SetParmVal( id, "Sym_Planar_Flag", "Sym", sym_flag );
+    SetParmVal( id, "Span", "XSec_1", semi_span );
+    SetParmVal( id, "Root_Chord", "XSec_1", chord );
+    SetParmVal( id, "Tip_Chord", "XSec_1", chord );
+    SetParmVal( id, "Sweep", "XSec_1", 0.0 );
+    SetParmVal( id, "Sweep_Location", "XSec_1", 0.25 );
+    SetParmVal( id, "Dihedral", "XSec_1", 0.0 );
+    SetParmVal( id, "ThickChord", "XSecCurve_0", thick_chord );
+    SetParmVal( id, "ThickChord", "XSecCurve_1", thick_chord );
+}
+
+void SetVerticalTail( string id, string name, double x_le, double y, double z_top,
+                      double height, double chord, double thick_chord )
+{
+    SetRectWing( id, name, x_le, y, z_top, height, chord, thick_chord, 0 );
+    SetParmVal( id, "X_Rel_Rotation", "XForm", -90.0 );
+}
+
+void SetPusherPropDisk( string id )
+{
+    SetGeomName( id, "pusher_prop_actuator_disk" );
+    SetParmVal( id, "PropMode", "Design", PROP_DISK );
+    SetParmVal( id, "Diameter", "Design", 1.800 );
+    SetParmVal( id, "X_Rel_Location", "XForm", 1.800 );
+    SetParmVal( id, "Y_Rel_Location", "XForm", 0.000 );
+    SetParmVal( id, "Z_Rel_Location", "XForm", 0.450 );
+}
+
+void main()
+{
+    ClearVSPModel();
+
+    int aero_set = 3;
+    int prop_set = 4;
+    SetSetName( aero_set, "Aero_VLM" );
+    SetSetName( prop_set, "Aero_With_Pusher_Prop" );
+
+    // Mk-7 reference values from equations.txt and the Gazebo model.
+    double sref = 12.0;
+    double bref = 8.0;
+    double cref = 1.5;
+
+    // Main wing: C1_c=1.5 m, C1_b=8 m, t/c=0.17.
+    string main_wing = AddGeom( "WING", "" );
+    SetRectWing( main_wing, "main_wing", -0.615, 0.0, 0.930, 4.000, 1.500, 0.170, SYM_XZ );
+    SetSetFlag( main_wing, aero_set, true );
+    SetSetFlag( main_wing, prop_set, true );
+
+    // Horizontal tail sized for neutral point at 51% MAC:
+    // Sh=2.0777 m^2, span=2.9 m, chord=0.716 m, t/c=0.12.
+    string htail = AddGeom( "WING", "" );
+    SetRectWing( htail, "horizontal_tail", 4.785, 0.0, 0.960, 1.450, 0.716, 0.120, SYM_XZ );
+    SetSetFlag( htail, aero_set, true );
+    SetSetFlag( htail, prop_set, true );
+
+    // Twin vertical tails.  They are mounted below the aft end of the booms.
+    // Total Sv=0.8115 m^2, each tail: chord=0.720 m, height=0.564 m.
+    string right_vtail = AddGeom( "WING", "" );
+    SetVerticalTail( right_vtail, "right_vertical_tail", 5.143, 1.450, 0.840, 0.564, 0.720, 0.120 );
+    SetSetFlag( right_vtail, aero_set, true );
+    SetSetFlag( right_vtail, prop_set, true );
+
+    string left_vtail = AddGeom( "WING", "" );
+    SetVerticalTail( left_vtail, "left_vertical_tail", 5.143, -1.450, 0.840, 0.564, 0.720, 0.120 );
+    SetSetFlag( left_vtail, aero_set, true );
+    SetSetFlag( left_vtail, prop_set, true );
+
+    // Pusher propeller represented as an actuator disk.  SDF rotor_12 is at
+    // (-1.80, 0, 0.25), so OpenVSP coordinates are (1.80, 0, 0.45).
+    string pusher_prop = AddGeom( "PROP", "" );
+    SetPusherPropDisk( pusher_prop );
+    SetSetFlag( pusher_prop, prop_set, true );
+
+    Update();
+
+    string disk_id = FindActuatorDisk( 0 );
+    // HK-UK3-3B 175 cm / 24 deg static data scaled to 180 cm selects
+    // 2400 rpm.  CT/CP below are the 140 kt, L/D=8 cruise disk target
+    // (T=1.91 kN, eta_p=0.80) rather than the static bench coefficients.
+    SetParmVal( FindParm( disk_id, "RotorRPM", "Rotor" ), 2400.0 );
+    SetParmVal( FindParm( disk_id, "RotorCT", "Rotor" ), 0.09294 );
+    SetParmVal( FindParm( disk_id, "RotorCP", "Rotor" ), 0.11621 );
+    SetParmVal( FindParm( disk_id, "RotorHubDiameter", "Rotor" ), 0.270 );
+
+    Update();
+
+    // Reference quantities for later VSPAERO setup. These are printed because
+    // the GUI fields should be checked manually before the first stability run.
+    Print( "Mk-7 OpenVSP model generated." );
+    Print( "Reference: Sref=12.0 m^2, Bref=8.0 m, Cref=1.5 m" );
+    Print( "CG cases in OpenVSP coordinates:" );
+    Print( "  CG 41% MAC: x=0.000 m" );
+    Print( "  CG 43% MAC: x=0.030 m aft of 41% case" );
+    Print( "  CG 46% MAC: x=0.075 m aft of 41% case" );
+
+    WriteVSPFile( "models/teTra_mk-7_EM2/teTra_mk-7_EM2.vsp3", SET_ALL );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}
