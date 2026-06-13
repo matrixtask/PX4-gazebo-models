@@ -1,0 +1,84 @@
+{
+  "candidates": [
+    {
+      "name": "Y0_MODE4_current",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "Y1_MODE0_nowait",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 0,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "Y2_MODE3_traj",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 3,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "Y3_MODE5_fixed",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 5,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "Y4_MODE0_ERR600",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 6.0,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 0,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "candidates": [
+    {
+      "name": "E_D168",
+      "params": {
+        "MPC_XY_CRUISE": 16.3,
+        "MPC_JERK_AUTO": 1.38,
+        "MPC_XY_VEL_D_ACC": 1.68,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "E_C164_D166",
+      "params": {
+        "MPC_XY_CRUISE": 16.4,
+        "MPC_JERK_AUTO": 1.38,
+        "MPC_XY_VEL_D_ACC": 1.66,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "E_C164_D168",
+      "params": {
+        "MPC_XY_CRUISE": 16.4,
+        "MPC_JERK_AUTO": 1.38,
+        "MPC_XY_VEL_D_ACC": 1.68,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    }
+  ]
+}

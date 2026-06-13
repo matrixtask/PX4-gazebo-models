@@ -1,0 +1,52 @@
+{
+  "candidates": [
+    {
+      "name": "E_adopted",
+      "params": {
+        "MPC_XY_P": 0.30,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 16.3,
+        "MPC_JERK_AUTO": 1.38,
+        "MPC_XY_VEL_D_ACC": 1.66,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "E_XYP032",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 16.3,
+        "MPC_JERK_AUTO": 1.38,
+        "MPC_XY_VEL_D_ACC": 1.66,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "E_TRAJ022",
+      "params": {
+        "MPC_XY_P": 0.30,
+        "MPC_XY_TRAJ_P": 0.22,
+        "MPC_XY_CRUISE": 16.3,
+        "MPC_JERK_AUTO": 1.38,
+        "MPC_XY_VEL_D_ACC": 1.66,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "E_XYP032_TRAJ022",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.22,
+        "MPC_XY_CRUISE": 16.3,
+        "MPC_JERK_AUTO": 1.38,
+        "MPC_XY_VEL_D_ACC": 1.66,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    }
+  ]
+}

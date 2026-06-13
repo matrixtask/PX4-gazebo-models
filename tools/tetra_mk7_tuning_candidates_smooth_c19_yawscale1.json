@@ -1,0 +1,55 @@
+{
+  "candidates": [
+    {
+      "name": "SC0_C19_same_shape",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "SC1_C19_A565_J153_D177",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.77,
+        "MPC_ACC_HOR": 5.65,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.53,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "SC2_C19_A570_J154_D178",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.78,
+        "MPC_ACC_HOR": 5.70,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.54,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    }
+  ]
+}

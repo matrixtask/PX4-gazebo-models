@@ -1,0 +1,94 @@
+{
+  "candidates": [
+    {
+      "name": "T0_C18_current",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "T1_C18_A575_J145_D176",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.75,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.45,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "T2_C18_A585_J145_D180",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.80,
+        "MPC_ACC_HOR": 5.85,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.45,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "T3_C185_A575_J145_D180",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.5,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.80,
+        "MPC_ACC_HOR": 5.75,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.45,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "T4_C18_A570_J148_D178",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.78,
+        "MPC_ACC_HOR": 5.70,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.48,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "T5_C175_A570_J145_D176",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 17.5,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.70,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.45,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    }
+  ]
+}
