@@ -1,0 +1,33 @@
+// Compute VSPAERO geometry files for the teTra Mk-7 EM2 OpenVSP model.
+
+void main()
+{
+    ReadVSPFile( "models/teTra_mk-7_EM2/teTra_mk-7_EM2.vsp3" );
+    Update();
+
+    string analysis_name = "VSPAEROComputeGeometry";
+    SetAnalysisInputDefaults( analysis_name );
+
+    // Use VLM on the Aero_VLM custom set.  Bodies, booms, and landing gear can
+    // remain in the model as geometry context without entering the VLM solve.
+    array< int > thick_set = GetIntAnalysisInput( analysis_name, "GeomSet" );
+    array< int > thin_set = GetIntAnalysisInput( analysis_name, "ThinGeomSet" );
+    thick_set[0] = SET_TYPE::SET_NONE;
+    thin_set[0] = 3;
+    SetIntAnalysisInput( analysis_name, "GeomSet", thick_set );
+    SetIntAnalysisInput( analysis_name, "ThinGeomSet", thin_set );
+
+    array< int > symmetry = GetIntAnalysisInput( analysis_name, "Symmetry" );
+    symmetry[0] = 0;
+    SetIntAnalysisInput( analysis_name, "Symmetry", symmetry );
+
+    Print( "Computing VSPAERO geometry for teTra_mk-7_EM2..." );
+    string result_id = ExecAnalysis( analysis_name );
+    PrintResults( result_id );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

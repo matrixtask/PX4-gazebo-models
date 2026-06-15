@@ -1,0 +1,70 @@
+// Run a minimal VSPAERO sweep to create the solver setup for teTra Mk-7 EM2.
+
+void main()
+{
+    ReadVSPFile( "models/teTra_mk-7_EM2/teTra_mk-7_EM2.vsp3" );
+    Update();
+
+    string analysis_name = "VSPAEROSweep";
+    SetAnalysisInputDefaults( analysis_name );
+
+    array< int > geom_set;
+    geom_set.push_back( 3 );
+    SetIntAnalysisInput( analysis_name, "GeomSet", geom_set, 0 );
+
+    // Use manually supplied reference quantities rather than an arbitrary wing
+    // geom. OpenVSP GUI should show these under VSPAERO Reference.
+    array< int > ref_flag;
+    ref_flag.push_back( 0 );
+    SetIntAnalysisInput( analysis_name, "RefFlag", ref_flag, 0 );
+
+    array< double > sref;
+    sref.push_back( 12.0 );
+    SetDoubleAnalysisInput( analysis_name, "Sref", sref, 0 );
+
+    array< double > bref;
+    bref.push_back( 8.0 );
+    SetDoubleAnalysisInput( analysis_name, "bref", bref, 0 );
+
+    array< double > cref;
+    cref.push_back( 1.5 );
+    SetDoubleAnalysisInput( analysis_name, "cref", cref, 0 );
+
+    array< double > alpha;
+    alpha.push_back( 0.0 );
+    SetDoubleAnalysisInput( analysis_name, "AlphaStart", alpha, 0 );
+
+    array< int > alpha_npts;
+    alpha_npts.push_back( 1 );
+    SetIntAnalysisInput( analysis_name, "AlphaNpts", alpha_npts, 0 );
+
+    array< double > beta;
+    beta.push_back( 0.0 );
+    SetDoubleAnalysisInput( analysis_name, "BetaStart", beta, 0 );
+
+    array< int > beta_npts;
+    beta_npts.push_back( 1 );
+    SetIntAnalysisInput( analysis_name, "BetaNpts", beta_npts, 0 );
+
+    array< double > mach;
+    mach.push_back( 0.15 );
+    SetDoubleAnalysisInput( analysis_name, "MachStart", mach, 0 );
+
+    array< int > mach_npts;
+    mach_npts.push_back( 1 );
+    SetIntAnalysisInput( analysis_name, "MachNpts", mach_npts, 0 );
+
+    array< int > symmetry;
+    symmetry.push_back( 0 );
+    SetIntAnalysisInput( analysis_name, "Symmetry", symmetry, 0 );
+
+    Print( "Running minimal VSPAERO sweep for teTra_mk-7_EM2..." );
+    string result_id = ExecAnalysis( analysis_name );
+    PrintResults( result_id );
+
+    while ( GetNumTotalErrors() > 0 )
+    {
+        ErrorObj err = PopLastError();
+        Print( err.GetErrorString() );
+    }
+}

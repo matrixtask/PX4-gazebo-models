@@ -1,1 +1,3 @@
 sdf_parsing/build/
+tools/__pycache__/
+tools/results/

@@ -1,0 +1,89 @@
+{
+  "candidates": [
+    {
+      "name": "RF0_C19_current",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "RF1_C1925_same_shape",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.25,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "RF2_C195_same_shape",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.5,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "RF3_C1925_D178",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.25,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.78,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "RF4_C1925_J148_D178",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.25,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.78,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.48,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "candidates": [
+    {
+      "name": "Y1_baseline",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 16.3,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.66,
+        "MPC_ACC_HOR": 5.05,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.38,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "Y1_D170",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 16.3,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.70,
+        "MPC_ACC_HOR": 5.05,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.38,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "Y1_C17_A535_J145_D170",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 17.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.70,
+        "MPC_ACC_HOR": 5.35,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.45,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "Y1_C18_A560_J152_D176",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "Y1_SOFT_J132_D170",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.195,
+        "MPC_XY_CRUISE": 16.6,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.70,
+        "MPC_ACC_HOR": 5.20,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.32,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "Y1_ECO_J125",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.190,
+        "MPC_XY_CRUISE": 16.3,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_D_ACC": 1.62,
+        "MPC_ACC_HOR": 4.80,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.25,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    }
+  ]
+}

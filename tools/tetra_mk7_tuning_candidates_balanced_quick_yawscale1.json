@@ -1,0 +1,106 @@
+{
+  "candidates": [
+    {
+      "name": "BQ0_current_C18",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 18.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.76,
+        "MPC_ACC_HOR": 5.60,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.52,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "BQ1_C19_A575_J154_D178",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.78,
+        "MPC_ACC_HOR": 5.75,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.54,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "BQ2_C19_A585_J156_D180",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.80,
+        "MPC_ACC_HOR": 5.85,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.56,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "BQ3_C195_A590_J156_D180",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 19.5,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.80,
+        "MPC_ACC_HOR": 5.90,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.56,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "BQ4_C20_A590_J156_D182",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 20.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.82,
+        "MPC_ACC_HOR": 5.90,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.56,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    },
+    {
+      "name": "BQ5_C20_A595_J158_D182",
+      "params": {
+        "MPC_XY_P": 0.32,
+        "MPC_XY_TRAJ_P": 0.202,
+        "MPC_XY_CRUISE": 20.0,
+        "MPC_XY_VEL_P_ACC": 0.70,
+        "MPC_XY_VEL_I_ACC": 0.0,
+        "MPC_XY_VEL_D_ACC": 1.82,
+        "MPC_ACC_HOR": 5.95,
+        "MPC_XY_ERR_MAX": 5.05,
+        "MPC_JERK_AUTO": 1.58,
+        "MPC_YAW_MODE": 4,
+        "lift_slew": 0.055,
+        "pusher_slew": 0.11
+      }
+    }
+  ]
+}
