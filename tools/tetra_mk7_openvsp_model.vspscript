@@ -84,6 +84,26 @@ void main()
     SetSetFlag( left_vtail, aero_set, true );
     SetSetFlag( left_vtail, prop_set, true );
 
+    // Fuselage / cockpit pod (3-view: length ~3.5 m, height ~1.2 m, width ~1.3 m),
+    // slung BELOW the wing (parasol / high-wing arrangement). Including the body is
+    // essential: the dominant dihedral effect (Cl_beta) of this aircraft comes from the
+    // wing-above-fuselage interference, which a wing-only VLM (the previous model that
+    // gave Cl_beta ~= 0) entirely misses. The pod sits low (z centred ~0.0, i.e. ~0.9 m
+    // below the wing) and forward (cockpit).
+    string fuselage = AddGeom( "FUSELAGE", "" );
+    SetGeomName( fuselage, "fuselage_pod" );
+    SetParmVal( fuselage, "Length", "Design", 3.5 );
+    SetParmVal( fuselage, "X_Rel_Location", "XForm", -1.6 );
+    SetParmVal( fuselage, "Z_Rel_Location", "XForm", 0.05 );
+    // approximate max cross-section (height ~1.2 m, width ~1.3 m) via the body's
+    // mid cross-sections (OpenVSP defaults give an ellipsoid-like pod; scale it).
+    SetParmVal( fuselage, "Ellipse_Height", "XSecCurve_2", 1.2 );
+    SetParmVal( fuselage, "Ellipse_Width",  "XSecCurve_2", 1.3 );
+    SetParmVal( fuselage, "Ellipse_Height", "XSecCurve_3", 1.2 );
+    SetParmVal( fuselage, "Ellipse_Width",  "XSecCurve_3", 1.3 );
+    SetSetFlag( fuselage, aero_set, true );
+    SetSetFlag( fuselage, prop_set, true );
+
     // Pusher propeller represented as an actuator disk.  SDF rotor_12 is at
     // (-1.80, 0, 0.25), so OpenVSP coordinates are (1.80, 0, 0.45).
     string pusher_prop = AddGeom( "PROP", "" );

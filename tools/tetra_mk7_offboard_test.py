@@ -2,6 +2,7 @@
 
 import argparse
 import math
+import threading
 import time
 
 from pymavlink import mavutil
@@ -139,6 +140,21 @@ def main():
     master = mavutil.mavlink_connection(args.connect, autoreconnect=True)
     master.wait_heartbeat(timeout=30)
     print(f"heartbeat system={master.target_system} component={master.target_component}")
+
+    # Emit GCS heartbeats so PX4's "connection to the GCS" arming check passes in
+    # fully headless runs (pymavlink does not send heartbeats on its own).
+    def _gcs_heartbeat():
+        while True:
+            master.mav.heartbeat_send(
+                mavutil.mavlink.MAV_TYPE_GCS,
+                mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                0,
+                0,
+                mavutil.mavlink.MAV_STATE_ACTIVE,
+            )
+            time.sleep(1.0)
+
+    threading.Thread(target=_gcs_heartbeat, daemon=True).start()
 
     for assignment in args.param:
         name, value = assignment.split("=", 1)
