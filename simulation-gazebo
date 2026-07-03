@@ -93,11 +93,16 @@ def main():
     if not args.dryrun:
         cmd = f'GZ_SIM_RESOURCE_PATH={args.model_store}/models '
         # cmd += f'GZ_SIM_SYSTEM_PLUGIN_PATH={args.model_store}/plugins '
-        cmd += f'GZ_SIM_SERVER_CONFIG_PATH={args.model_store}/server.config '
+        _cfg = os.environ.get('GZ_CHASE_CONFIG', f'{args.model_store}/server.config')
+        cmd += f'GZ_SIM_SERVER_CONFIG_PATH={_cfg} '
         cmd += f'gz sim -r {args.model_store}/worlds/{args.world}.sdf'
 
         if args.headless:
             cmd = f'{cmd} -s'
+            # Opt-in GPU offscreen (EGL) rendering so camera sensors render headlessly
+            # (needed for the chase-camera video recorder). Set GZ_HEADLESS_RENDER=1.
+            if os.environ.get('GZ_HEADLESS_RENDER'):
+                cmd = f'{cmd} --headless-rendering'
 
         if args.gz_partition:
             cmd = f'GZ_PARTITION={args.gz_partition} {cmd}'

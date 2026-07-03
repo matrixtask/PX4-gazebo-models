@@ -76,7 +76,7 @@ PRE_LVL_DECEL  = True     # [RP-1f ① user-arch] BEFORE the back-trans, deceler
 LVL_SPOIL      = -0.55    # no glide overshoot) with a MILD spoiler (-0.40, ~10deg = proven non-divergent) lift-dumping
 BT_LO_AS       = 44.0     # [NEW-SPEC] bleed 72 -> BT_LO_AS at altitude, THEN back-trans. Lower (44 vs 55) = the lift
 ROLLOUT_ATT    = True     # [attitude-cmd roll-out] at the turn exit, OFFBOARD-ATTITUDE command roll_sp = P9(bank->0) and
-ROLLOUT_T      = 6.0      # let the FW attitude controller TRACK it (same path as the clean roll-IN), instead of letting
+ROLLOUT_T      = float(os.environ.get("MK7_ROLLOUT_T", "6.0"))  # [a-smooth] gentler roll-out (longer) -> less roll-rate momentum at 0 -> less -side overshoot at the brake entry. let the FW attitude controller TRACK it (same path as the clean roll-IN), instead of letting
 ROLLOUT_THR    = 0.40     # nav drop the bank open-loop (roll fell BELOW sp -> -28deg overshoot + 0.17Hz ring). T=ramp s.
 PRETRIM_EN     = True     # [phase-sched I] fallback: re-trim (restore high I) a few s before the back-trans. Usually OFF
                           # because the cruise-trimmed integrator value is RETAINED across the decel gain drop 0.3->0.1.
@@ -126,6 +126,44 @@ DESC_HOME_DIST = 3300.0  # m: on the way back, fly level at 300 until this close
 GATE_DESC_DIST = 1800.0  # m: descend-to-gate leg (300 -> 152 m) heading back toward the start.
 RP1_TURN_RAD   = 528.0   # m: RP-1 180 deg turn radius = V_CR^2/(g tan25) at 72 m/s (mk7_fullprofile_3d_v2).
 TURN_BANK      = 45.0    # deg: FW roll limit during the turn = RP-1 design bank 25 deg (R=1134 m @ 72 m/s).
+# [FIG-8] figure-8 (infinity) topology: after the cruise-out, fly a symmetric horizontal infinity centred at HOME
+# (East lobe CW 270 + West lobe CCW 270, crossing at HOME), then return to HOME for the brake/descent/land. Gated by
+# FIG8 (env) so existing single-loop runs are unchanged. R=528 m @ 72/45; legs sized so the infinity closes at HOME.
+FIG8           = os.environ.get("FIG8", "0") == "1"
+FIG8_R         = float(os.environ.get("FIG8_R", "528.0"))     # turn radius (V^2/(g tan45) at 72 m/s)
+FIG8_LEG       = float(os.environ.get("FIG8_LEG", "528.0"))   # out/home diagonal leg distance from HOME to a corner (=R compact)
+FIG8_SWEEP     = float(os.environ.get("FIG8_SWEEP", "270.0")) # lobe turn sweep [deg]
+# [VERT] vertical (N-S) RACETRACK: azimuth 125->30 (NNE) out leg, CCW180 turn x2, descent on the back leg.
+# Gated so FIG8=0 single-loop + FIG8=1 runs are byte-identical. VERT_HDG = out-leg heading; turn2 is at the
+# 152 m gate at low speed (gentle bank + lift-rotor differential roll on, like P9) -> stall/roll-divergence safe.
+VERT           = os.environ.get("VERT", "0") == "1"
+VERT_HDG       = float(os.environ.get("VERT_HDG", "30.0"))    # out-leg azimuth (NNE) -> N-S elongated racetrack
+VERT_T2_BANK   = float(os.environ.get("VERT_T2_BANK", "25.0"))# turn2 bank at 152 m (gentle: 38 m/s stall-safe)
+VERT_T2_AS     = float(os.environ.get("VERT_T2_AS", "42.0"))  # turn2 airspeed target (margin above the 38 descent)
+if VERT: P8_BRAKE_HDG = (VERT_HDG + 180.0) % 360.0            # [VERT] back-leg heading = out(30)+180 = 210 (SSW), not West(270)
+# [CROSS] figure-8 SELF-CROSSING infinity (reuses the FIG8 flow): 45 NE out leg, Turn1 CW202 + Turn2 CCW202 (opposite
+# rotation -> the cross leg crosses the out leg near HOME, per mk7_fig8cross_predict_v3), then HOME-aimed descent -> land.
+# 202 deg is the MINIMUM sweep that self-crosses (200 exactly does not). Gated so FIG8/VERT/default are byte-identical.
+CROSS          = os.environ.get("CROSS", "0") == "1"
+CROSS_HDG      = float(os.environ.get("CROSS_HDG", "45.0"))   # out-leg azimuth (NE)
+CROSS_SWEEP    = float(os.environ.get("CROSS_SWEEP", "202.0"))# lobe turn sweep [deg] (min self-crossing)
+CROSS_LEG      = float(os.environ.get("CROSS_LEG", "1645.0")) # leg unit: leg1/home = CROSS_LEG, cross leg = 2x -> ~3.3 km cross
+if CROSS:
+    FIG8 = True                                              # reuse the FIG8 lobe/cross-leg/turn machinery
+    FIG8_SWEEP = CROSS_SWEEP; FIG8_LEG = CROSS_LEG
+
+def cross_sched(cum, cas):
+    # [CROSS/b] INTEGRATED descent along the infinity path: (alt_tgt, spd_tgt, spoiler, rotor_support) keyed to the
+    # cumulative distance from leg1-start. Brake 72->38 on leg1+Turn1+cross-start, P9 300->152 on cross+Turn2, then hold
+    # 152/38 to the infinity end (descend1/4 handled after). Distance-checked to fit (8.35 km descent < 9.16 km infinity).
+    BR = 3800.0; P9L = 3600.0
+    if cum < BR:                                  # BRAKE 72->38 @300 m (level, spoiler + rotor support ramp in)
+        f = cum / BR
+        return CRUISE_ALT_ABS, CRUISE_AS + (P8_BRAKE_AS - CRUISE_AS) * f, P8_SPOIL * min(1.0, f * 3.0), 0.50 * min(1.0, f * 2.0)
+    if cum < BR + P9L:                            # P9 descent 300->152 @38 (rotor-supported, speed-feedback spoiler)
+        f = (cum - BR) / P9L
+        return CRUISE_ALT_ABS + (GATE_ALT - CRUISE_ALT_ABS) * f, P8_BRAKE_AS, max(-0.95, min(0.0, -0.20 - 0.13 * (cas - P8_BRAKE_AS))), 0.42
+    return GATE_ALT, P8_BRAKE_AS, -0.30, 0.42     # hold 152 m / 38 to the infinity end -> back-trans + descend1/4 -> HOME
 # Home approach mode (6-DOF disturbance study). The FW roll-setpoint THRASH (+-15 deg, ~0.3 Hz, the
 # trajectory disturbance) is caused by the FW nav CHASING the near home WAYPOINT on the cruise-back/descent
 # (near-waypoint bearing is hyper-sensitive). NOT fixable by rate/attitude gains (rate-damping tune = no
@@ -520,7 +558,7 @@ def main():
         print(f"=> [P2 Hover1] held P1-end heading {_p2_hdg:.0f} (takeoff ~{_tko_hdg:.0f}) at {HOVER_ALT:.0f} m (8 s)", flush=True)
         # [NEW-SPEC P3] Hover and set: P9-snap yaw from the ACTUAL P2 heading -> EAST (90 deg) at constant alt + held position.
         # Ramp from _p2_hdg (the real current heading), NOT the spawn -> no initial step; hold the P2 XY position.
-        SET_HDG = 90.0                                    # new RP-1: out-leg points EAST (was North 0)
+        SET_HDG = VERT_HDG if VERT else (CROSS_HDG if CROSS else 90.0)   # EAST(90) default; [VERT] NNE(30); [CROSS] NE(45)
         _yaw_err = (SET_HDG - _p2_hdg + 540.0) % 360.0 - 180.0   # signed shortest turn from the P2 heading to East
         ty0 = time.time(); YAW_T = 6.0; _p3_hdg = _p2_hdg
         while True:                                       # P9 ramp, then HOLD East until the soft rotor yaw CONVERGES (<1.2 deg)
@@ -601,6 +639,13 @@ def main():
     _cb_offb = False; _ret_hdg = 0.0               # [SP-SMOOTH] hold the straight back-leg under OFFBOARD wings-level velocity
     _cb_course0 = None                             # [T1-FIX] ground course captured at the cruise-back handoff (continuous -> no capture bank)
     _turn_offb = False; _turn_psi0 = 0.0           # [SP-SMOOTH P7] attitude-cmd CW coordinated turn (replaces the nav loiter)
+    _turn_dir = 1.0; _turn_target = 180.0          # [FIG-8] turn direction (+1 CW, -1 CCW) + sweep angle [deg] (parametrised turn)
+    _turn_alt = CRUISE_ALT_ABS; _turn_as = CRUISE_AS; _turn_bank = TURN_BANK   # [VERT] parametrised turn alt/speed/bank (turn2 @152/low-speed)
+    _vert_turn = 0                                 # [VERT] racetrack turn counter: 0=none, 1=turn1@300 (out->back), 2=turn2@152 (back->out)
+    _cross_frz_hdg = None                          # [CROSS/a] FROZEN HOME-bearing for the straight descent (set once at Turn2 exit -> no near-HOME bearing thrash)
+    _cross_cum = 0.0; _cross_pll = None            # [CROSS/b] cumulative distance along the infinity (leg1-start) for the INTEGRATED descent schedule
+    _fig8_stage = 0                                # [FIG-8] 0=off, 1=leg1(NE out), 2=turnA, 3=leg2(NW cross), 4=turnB, 5=leg3(NE home)
+    _fig8_hdg = 0.0; _fig8_dist = 0.0; _fig8_lat0 = _fig8_lon0 = None   # [FIG-8] current cruise-leg target heading, distance, start point
     _last_clmb = CLIMB_CLMB_MAX; _cruise_t0 = 0.0; _cruise_as0 = 54.0; _cruise_last = 0.0  # [P5 flare + P6 P9 airspeed ramp]
     _cruise_offb = False; _cruise_pitch0 = 0.0; _cruise_hdg0 = 90.0   # [P6 SP-SMOOTH] attitude-cmd East cruise (level-off + accel)
     _p8_offb = False; _p8_t0 = 0.0; _p8_as0 = 72.0                    # [P8 Cruise Brake] level spoiler brake 72->38 @300m West
@@ -689,6 +734,17 @@ def main():
                     gophase("settle")
         if cur_lat is None or fw_done_t is None: continue
 
+        # [CROSS] HOME-aimed return heading for the brake/descent (so the SW-lobe exit descends back to HOME -> closure ~0).
+        # For non-CROSS modes this stays == P8_BRAKE_HDG (default West 270 / VERT 210) so those runs are byte-identical.
+        _home_brg2 = P8_BRAKE_HDG
+        if CROSS:
+            if _cross_frz_hdg is not None:
+                _home_brg2 = _cross_frz_hdg                          # [a] FROZEN straight-line approach -> no near-HOME bearing thrash
+            elif _home_lat is not None:
+                _dNh = (_home_lat - cur_lat) * 111320.0
+                _dEh = (_home_lon - cur_lon) * 111320.0 * math.cos(math.radians(cur_lat))
+                _home_brg2 = math.degrees(math.atan2(_dEh, _dNh)) % 360.0
+
         # [RP-1f 3-term (5) TESTED -> NO EFFECT] ramping VT_FW_MC_THR (rotor collective) up with speed did NOT hold
         # altitude (still sagged 92 m): in FW the TECS controls height via PITCH and does not coordinate with the
         # open-loop rotor collective -> the added rotor lift is offset by the TECS pitching down. A true level decel
@@ -748,11 +804,11 @@ def main():
             f = P9(elapsed / T_ENTRY) if elapsed < T_ENTRY else 1.0    # TIME-based P9 ease-in 0->45, then HOLD 45 = best
             #   rate. The roll-OUT is handed to the dedicated rollout phase below (proven clean P9 45->0) at dh~155, NOT
             #   a dh-based ramp here (that + the homecap handoff produced a -48 deg exit spike).
-            bank = math.radians(TURN_BANK) * f                         # + = CW (right bank)
-            alt_err = CRUISE_ALT_ABS - cur_alt
+            bank = math.radians(_turn_bank) * f * _turn_dir            # [FIG-8] + = CW (right bank), - = CCW (left bank); [VERT] _turn_bank gentler @ turn2
+            alt_err = _turn_alt - cur_alt                              # [VERT] hold _turn_alt (300 @ turn1, 152 @ turn2)
             pitch_c = math.radians(max(-7.0, min(13.0, 2.0*f + 0.85*alt_err + 0.55*cur_vz)))   # [C-smooth1b] turn-AoA FF 4.5->2.0 (was 3x the real bank load-factor need -> excess-lift +14 m climb), STIFFER alt-hold 0.55->0.85 + more vz-damp -> hold 300 in the bank
             qd = quat_from_euler(bank, pitch_c, math.radians(cur_hdg))
-            thr_turn = max(0.30, min(0.90, 0.58 + 0.10*(CRUISE_AS - cur_as)))   # [C-smooth1 REVERTED] speed-tighten did NOT reduce the turn climb (excess speed refuted) and perturbed the rollout; back to base
+            thr_turn = max(0.30, min(0.90, 0.58 + 0.10*(_turn_as - cur_as)))   # [VERT] hold _turn_as (72 @ turn1, 42 @ turn2); [C-smooth1 REVERTED] base
             m.mav.set_attitude_target_send(0, m.target_system, m.target_component, 0b00000111, qd, 0.0, 0.0, 0.0, thr_turn)
             cmd(m, mavutil.mavlink.MAV_CMD_DO_SET_MODE, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 6, 0)
 
@@ -767,13 +823,25 @@ def main():
             pitch_c = _cruise_pitch0*(1.0 - wl) + pitch_ctrl*wl
             # ROLL = heading-HOLD: bank proportional to the heading error -> actively steer the heading to EAST(90). roll=0
             # cannot hold a heading in FW (it just drifts to the trim ~77); a proportional bank converges it to 90.
-            herr = (90.0 - cur_hdg + 540.0) % 360.0 - 180.0
+            herr = ((VERT_HDG if VERT else 90.0) - cur_hdg + 540.0) % 360.0 - 180.0   # [VERT] hold out-leg 30 (else East 90)
             roll_c = max(-12.0, min(12.0, 0.5*herr)) * wl
             as_tgt = _cruise_as0 + (CRUISE_AS - _cruise_as0) * P9(min(1.0, w / 15.0))   # P9 airspeed target cur_as->72 (TAS, calibrated)
             # [#3] HOLD true 72: baseline 0.65 balanced at ~77 (overshoot). Lower to 0.55 (the ~72 cruise thrust) + a stronger
             # gain so the throttle backs off HARD as cur_as approaches/exceeds 72 -> no +5 over-speed into the turn.
             thr = max(0.25, min(0.95, 0.48 + 0.10*(as_tgt - cur_as)))   # [C-smooth1 REVERTED to base] (speed not the climb source)
             qd = quat_from_euler(math.radians(roll_c), math.radians(pitch_c), math.radians(cur_hdg))   # yaw=cur_hdg -> coordinated, no sideslip
+            m.mav.set_attitude_target_send(0, m.target_system, m.target_component, 0b00000111, qd, 0.0, 0.0, 0.0, thr)
+            cmd(m, mavutil.mavlink.MAV_CMD_DO_SET_MODE, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 6, 0)
+
+        # [FIG-8 cruise-leg hook] fly the straight diagonal leg at _fig8_hdg, 72/300 m. heading-hold roll (steer to _fig8_hdg
+        # then fly straight), pitch=alt-hold(300)+vz-damp, throttle=airspeed-hold(72), yaw=cur_hdg (coordinated). Same SP-SMOOTH
+        # attitude path as the cruise-out -> no nav wiggle. Used for all 3 infinity cruise legs (out / cross-HOME / home).
+        if phase == "fig8cruise" and cur_lat is not None:
+            pitch_c = max(-6.0, min(7.0, 0.5 + 0.50*(CRUISE_ALT_ABS - cur_alt) + 0.80*cur_vz))
+            herr = (_fig8_hdg - cur_hdg + 540.0) % 360.0 - 180.0
+            roll_c = max(-20.0, min(20.0, 0.6*herr))
+            thr = max(0.25, min(0.95, 0.48 + 0.10*(CRUISE_AS - cur_as)))
+            qd = quat_from_euler(math.radians(roll_c), math.radians(pitch_c), math.radians(cur_hdg))
             m.mav.set_attitude_target_send(0, m.target_system, m.target_component, 0b00000111, qd, 0.0, 0.0, 0.0, thr)
             cmd(m, mavutil.mavlink.MAV_CMD_DO_SET_MODE, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 6, 0)
 
@@ -803,7 +871,7 @@ def main():
             alt_err = CRUISE_ALT_ABS - cur_alt
             pitch_c = math.radians(max(-3.0, min(7.0, 2.0 + 0.40*alt_err)))   # [#5] stiffer pitch alt-hold
             course = math.degrees(math.atan2(cur_vE, cur_vN))
-            herr = (P8_BRAKE_HDG - (cur_hdg % 360.0) + 540.0) % 360.0 - 180.0
+            herr = (_home_brg2 - (cur_hdg % 360.0) + 540.0) % 360.0 - 180.0
             roll_c = max(-12.0, min(12.0, 0.5*herr))                      # bank back to WEST(270) (rotor-stabilized, coordinated)
             thr = max(0.03, min(0.60, 0.50 + 0.05*(P8_BRAKE_AS - cur_as)))
             qd = quat_from_euler(math.radians(roll_c), pitch_c, math.radians(course))
@@ -846,7 +914,7 @@ def main():
             # cannot amplify beta=asin(vy/V) -> the entry transient source is removed at the source. [Replaces the heading-hold
             # West which held the NOSE West while the velocity track drifted south -> a persistent kinematic crab.]
             course = math.degrees(math.atan2(cur_vE, cur_vN)) % 360.0
-            cerr = (P8_BRAKE_HDG - course + 540.0) % 360.0 - 180.0        # TRACK error to West(270)
+            cerr = (_home_brg2 - course + 540.0) % 360.0 - 180.0          # TRACK error to return heading ([CROSS] HOME bearing; else West 270)
             _hdg_i = max(-12.0, min(12.0, _hdg_i + cerr*0.1))
             roll_c = max(-15.0, min(15.0, 0.50*cerr + 0.12*_hdg_i))       # bank to steer the TRACK to West (coordinated turn)
             qd = quat_from_euler(math.radians(roll_c), pitch_c, math.radians(course))   # yaw=course -> nose tracks velocity, beta=0
@@ -862,7 +930,7 @@ def main():
             ramp_in = P9(min(1.0, w/12.0)); fade = P9(max(0.0, min(1.0, (cur_as - 18.0)/10.0)))
             set_flap(-0.45 * ramp_in * fade)                             # GENTLE spoiler [-0.45 not -0.90] -> the flaperons do NOT saturate at high speed -> roll authority kept (kills the +-28 roll spike); slower ramp 12 s
             pitch_c = math.radians(max(-3.0, min(8.0, 1.0 + 0.30*(GATE_ALT - cur_alt) + 0.55*cur_vz)))   # alt-hold 152 + vz-damp
-            herr = (P8_BRAKE_HDG - (cur_hdg % 360.0) + 540.0) % 360.0 - 180.0
+            herr = (_home_brg2 - (cur_hdg % 360.0) + 540.0) % 360.0 - 180.0
             roll_c = max(-12.0, min(12.0, 0.5*herr))                     # heading-hold WEST
             course = math.degrees(math.atan2(cur_vE, cur_vN))
             thr = max(0.03, min(0.60, 0.45 + 0.05*(16.0 - cur_as)))      # airspeed-hold 16 (idle while fast -> decelerate to ~18)
@@ -942,13 +1010,38 @@ def main():
             # follows the natural coordinated turn (yaw_sp = cur_hdg, no rudder fight). roll_sp is smooth -> no wiggle.
             set_param(m, "FW_R_LIM", TURN_BANK + 3.0)
             _cruise_offb = False                                       # [P6] end the SP-SMOOTH cruise attitude hold -> P7 turn
-            _turn_psi0 = cur_hdg; _turn_hdg0 = cur_hdg; _turn_offb = True
-            print(f"  => RP-1 P7 TURN 180 CW (attitude-cmd coordinated bank<= {TURN_BANK:.0f}, best-rate) from hdg={cur_hdg:.0f}", flush=True)
-            gophase("turn180")
+            if VERT:                                                   # [VERT] racetrack turn1: CCW 180 @300 (out 30 -> back 210)
+                _turn_dir = -1.0; _turn_target = 180.0; _turn_alt = CRUISE_ALT_ABS; _turn_as = CRUISE_AS; _turn_bank = TURN_BANK
+                _vert_turn = 1; _turn_psi0 = cur_hdg; _turn_hdg0 = cur_hdg; _turn_offb = True
+                print(f"  => [VERT] TURN 1 CCW 180 @300 (out->back) from hdg={cur_hdg:.0f}", flush=True); gophase("turn180")
+            elif FIG8:                                                 # [FIG-8] enter the infinity: leg1 cruise NE (out) -> East lobe (CW270)
+                _fig8_stage = 1; _fig8_hdg = 45.0; _fig8_dist = FIG8_LEG; _fig8_lat0, _fig8_lon0 = cur_lat, cur_lon
+                print(f"  => [FIG-8] ENTER infinity: cruise NE(45) {_fig8_dist:.0f}m (out leg)", flush=True); gophase("fig8cruise")
+            else:
+                _turn_psi0 = cur_hdg; _turn_hdg0 = cur_hdg; _turn_offb = True
+                print(f"  => RP-1 P7 TURN 180 CW (attitude-cmd coordinated bank<= {TURN_BANK:.0f}, best-rate) from hdg={cur_hdg:.0f}", flush=True)
+                gophase("turn180")
+        elif phase == "fig8cruise" and (hdist(_fig8_lat0, _fig8_lon0, cur_lat, cur_lon) >= _fig8_dist or now-phase_t > 60.0):
+            if _fig8_stage == 1:                                       # [FIG-8] leg1 (NE out) done -> East lobe = Turn A (CW 270)
+                _turn_dir = 1.0; _turn_target = FIG8_SWEEP; _turn_psi0 = cur_hdg; _turn_hdg0 = cur_hdg; _turn_offb = True; _fig8_stage = 2
+                set_param(m, "FW_R_LIM", TURN_BANK + 3.0)
+                print(f"  => [FIG-8] Turn A: CW {FIG8_SWEEP:.0f} (East lobe) from hdg={cur_hdg:.0f}", flush=True); gophase("turn180")
+            elif _fig8_stage == 3:                                     # [FIG-8] leg2 (NW cross) done -> West lobe = Turn B (CCW 270)
+                _turn_dir = -1.0; _turn_target = FIG8_SWEEP; _turn_psi0 = cur_hdg; _turn_hdg0 = cur_hdg; _turn_offb = True; _fig8_stage = 4
+                set_param(m, "FW_R_LIM", TURN_BANK + 3.0)
+                print(f"  => [FIG-8] Turn B: CCW {FIG8_SWEEP:.0f} (West lobe) from hdg={cur_hdg:.0f}", flush=True); gophase("turn180")
+            elif _fig8_stage == 5:                                     # [FIG-8] leg3 (NE home) done -> infinity CLOSED at HOME -> [P8] brake
+                _cb_lat0, _cb_lon0 = cur_lat, cur_lon
+                _p8_t0 = now; _p8_as0 = cur_as; _p8_offb = True
+                set_param(m, "FW_THR_MIN", 0.0); set_param(m, "FW_R_LIM", 15.0); set_param(m, "FW_RR_D", 0.10)
+                set_param(m, "MC_ROLLRATE_P", 0.45); set_param(m, "MC_ROLLRATE_D", 0.06)
+                he = hdist(_home_lat, _home_lon, cur_lat, cur_lon) if _home_lat is not None else -1.0
+                print(f"  => [FIG-8] infinity CLOSED (HOME err {he:.0f} m) -> P8 brake -> descend/land @HOME", flush=True); gophase("p8brake")
         elif phase == "turn180":
-            dh = (cur_hdg - _turn_psi0 + 360.0) % 360.0                 # CW heading swept 0 -> 180 (+)
-            if (155.0 <= dh <= 270.0) or now-phase_t > 80.0:            # best-rate turn ~done -> hand to the PROVEN roll-out
-                _turn_offb = False; set_param(m, "FW_R_LIM", 15.0)      # attitude turn did entry+mid; rollout does 45->0
+            dh = ((cur_hdg - _turn_psi0) * _turn_dir + 720.0) % 360.0   # [FIG-8] DIRECTIONAL heading swept (CW dir=+1 / CCW dir=-1), 0 -> target
+            _rollout_dh = (_turn_target - 35.0) if FIG8 else float(os.environ.get("MK7_ROLLOUT_DH","145.0"))   # roll-out ~35deg before the target sweep (180 single / 270 fig-8 lobe)
+            if (now-phase_t > 5.0 and _rollout_dh <= dh <= _turn_target + 20.0) or now-phase_t > 90.0:  # 5s guard vs entry-wrap false trigger
+                _turn_offb = False; set_param(m, "FW_R_LIM", 15.0)      # [a-smooth] roll-out FW_RR_D damping TESTED -> no effect (-23.1->-22.8) & slight P8 regress -> reverted. attitude turn did entry+mid; rollout does 45->0
                 _turn_hdg0 = _turn_psi0                                 # out-leg heading (rollout->homecap uses +180=South)
                 _rollout_t0 = now; _rollout_roll0 = cur_roll; _rollout_yaw0 = cur_hdg; _rollout_pitch0 = cur_pitch
                 print(f"  => RP-1 P7 turn body done (hdg={cur_hdg:.0f} dh={dh:.0f}) -> attitude ROLL-OUT {cur_roll:+.0f}->0 (P9)", flush=True)
@@ -965,14 +1058,27 @@ def main():
             m.mav.set_attitude_target_send(0, m.target_system, m.target_component, 0b00000111,
                 qd, 0.0, 0.0, 0.0, ROLLOUT_THR)
             cmd(m, mavutil.mavlink.MAV_CMD_DO_SET_MODE, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 6, 0)
-            if w >= 1.0 and abs(cur_roll) < 8.0:                     # roll-out done & wings-level -> [P8] LEVEL spoiler brake
-                _cb_lat0, _cb_lon0 = cur_lat, cur_lon
-                _p8_t0 = now; _p8_as0 = cur_as; _p8_offb = True      # [P8 Cruise Brake] start the level spoiler brake 72->38 @300m West
-                set_param(m, "FW_THR_MIN", 0.0); set_param(m, "FW_R_LIM", 15.0)
-                set_param(m, "FW_RR_D", 0.10)                        # [#4] damp the brake roll oscillation
-                set_param(m, "MC_ROLLRATE_P", 0.45); set_param(m, "MC_ROLLRATE_D", 0.06)   # [P8 roll] engage the rotor differential for roll (the deep spoiler took the flaperon roll authority)
-                print(f"  => RP-1 P8 CRUISE-BRAKE (A): level spoiler brake {cur_as:.0f}->{P8_BRAKE_AS:.0f} m/s @300m West (course={course:.0f})", flush=True)
-                gophase("p8brake")
+            if w >= 1.0 and abs(cur_roll) < 8.0:                     # roll-out done & wings-level
+                if FIG8 and _fig8_stage == 2:                        # [FIG-8] East lobe (CW270) done -> cross leg toward HOME -> West lobe
+                    _fig8_stage = 3; _fig8_hdg = cur_hdg % 360.0; _fig8_dist = 2.0*FIG8_LEG; _fig8_lat0, _fig8_lon0 = cur_lat, cur_lon
+                    print(f"  => [FIG-8] East lobe (CW270) done hdg={cur_hdg:.0f} -> cruise {_fig8_dist:.0f}m (cross HOME)", flush=True); gophase("fig8cruise")
+                elif FIG8 and _fig8_stage == 4:                      # [FIG-8] West lobe (CCW270) done -> home leg -> HOME -> brake
+                    _fig8_stage = 5; _fig8_lat0, _fig8_lon0 = cur_lat, cur_lon
+                    if CROSS:                                        # [CROSS] home leg aims toward HOME (aligns the heading); the freeze happens at descent-start (course-hold, below)
+                        _fig8_hdg = _home_brg2; _fig8_dist = 500.0
+                    else:
+                        _fig8_hdg = cur_hdg % 360.0; _fig8_dist = FIG8_LEG
+                    print(f"  => [FIG-8/CROSS] lobe2 done hdg={cur_hdg:.0f} -> leg {_fig8_dist:.0f}m (hdg {_fig8_hdg:.0f}) -> HOME/brake", flush=True); gophase("fig8cruise")
+                elif VERT and _vert_turn == 2:                       # [VERT] turn2 (CCW180 @152) done -> re-enter p9descend (alt~152) -> back-trans + 1/4 -> land
+                    print(f"  => [VERT] TURN 2 done hdg={cur_hdg:.0f} alt={cur_alt:.0f} -> back-trans + descend 1/4 -> HOME land", flush=True); gophase("p9descend")
+                else:                                                # single-loop (or fig-8 not active) -> [P8] LEVEL spoiler brake
+                    _cb_lat0, _cb_lon0 = cur_lat, cur_lon
+                    _p8_t0 = now; _p8_as0 = cur_as; _p8_offb = True      # [P8 Cruise Brake] start the level spoiler brake 72->38 @300m West
+                    set_param(m, "FW_THR_MIN", 0.0); set_param(m, "FW_R_LIM", 15.0)
+                    set_param(m, "FW_RR_D", 0.10)                        # [#4] damp the brake roll oscillation
+                    set_param(m, "MC_ROLLRATE_P", 0.45); set_param(m, "MC_ROLLRATE_D", 0.06)   # [P8 roll] engage the rotor differential for roll (the deep spoiler took the flaperon roll authority)
+                    print(f"  => RP-1 P8 CRUISE-BRAKE (A): level spoiler brake {cur_as:.0f}->{P8_BRAKE_AS:.0f} m/s @300m West (course={course:.0f})", flush=True)
+                    gophase("p8brake")
         elif phase == "p8brake" and cur_as <= P8_BRAKE_AS + 3.0:      # the brake settles ~40 (spoiler fades at 38); P9 dials the last 2 m/s to 38
             if not _p8_reached:
                 _p8_reached = True; _p8_reach_t = now
@@ -980,8 +1086,20 @@ def main():
             elif now - _p8_reach_t > 5.0:                             # brief settle, then START the P9 descent (P9 holds exactly 38)
                 set_param(m, "FW_RR_D", 0.06); set_param(m, "FW_YD_GAIN", 6.5); set_param(m, "VT_FW_RDIFF", float(os.environ.get("MK7_RDIFF", "0.5")))   # [P9 ROLL-AUTH] lift-rotor diff roll (ailerons ~28% at 38 m/s; rotors already ~0.51). [DR mode-ID DONE] P9 roll osc = AIRFRAME low-speed roll divergence (38 m/s, below the 45 stable band); NOT control-fixable: yaw-damper 2x made it WORSE (0.26->2.14, adverse coupling), roll-rate-D 2x had NO effect (0.26->0.28, aileron authority ~28% at 38 m/s). Reverted to baseline. Already within spec (0.26<0.5).
                 _p9_t0 = now; _p9_alt0 = cur_alt; _p9_offb = True; _p8_offb = False; _hdg_i = 0.0
+                if CROSS:                                            # [CROSS/a] FREEZE the descent track = the CURRENT course at descent-start -> straight descent, ZERO track correction -> no roll thrash (matches the single-loop 0.26 osc). Brake already aligned the course toward HOME.
+                    _cross_frz_hdg = math.degrees(math.atan2(cur_vE, cur_vN)) % 360.0
+                    print(f"  => [CROSS/a] descent track FROZEN at course={_cross_frz_hdg:.0f} (straight approach, no thrash)", flush=True)
                 print(f"  => RP-1 P9 DESCEND X: 38-hold descent {cur_alt:.0f}->{GATE_ALT:.0f} m @{P8_BRAKE_AS:.0f} m/s West (P9 profile {P9_DESC_T:.0f}s)", flush=True)
                 gophase("p9descend")
+        elif phase == "p9descend" and VERT and _vert_turn < 2 and cur_alt <= GATE_ALT + 1.0:
+            # [VERT] reached the 152 m gate -> TURN 2 (CCW180) at 152 m BEFORE the back-trans, so the back leg (210) turns
+            # back to the out heading (30) for a parallel HOME-approach leg (the racetrack closes). Gentle bank + low speed
+            # target + the P9 lift-rotor differential roll (VT_FW_RDIFF) stays ON for roll authority below the 45 m/s band.
+            _turn_dir = -1.0; _turn_target = 180.0; _turn_alt = GATE_ALT; _turn_as = VERT_T2_AS; _turn_bank = VERT_T2_BANK
+            _vert_turn = 2; _turn_psi0 = cur_hdg; _turn_hdg0 = cur_hdg; _turn_offb = True; _p9_offb = False
+            set_param(m, "FW_R_LIM", VERT_T2_BANK + 3.0)
+            print(f"  => [VERT] P9 done @{cur_alt:.0f}m as={cur_as:.1f} -> TURN 2 CCW180 @152 (bank {VERT_T2_BANK:.0f}, as~{VERT_T2_AS:.0f}, RDIFF on) hdg={cur_hdg:.0f}", flush=True)
+            gophase("turn180")
         elif phase == "p9descend" and cur_alt <= GATE_ALT + 1.0:
             # [P10 Descend 1/4] reached the 152 m gate at 38 m/s West -> BACK-TRANSITION (V rotors do the decel; pusher C OFF
             # = energy-minimal, adding C thrust would fight the decel) + the PROVEN velocity-FF decel machinery: level speed-
