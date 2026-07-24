@@ -100,9 +100,17 @@
     <plugin filename="gz-sim-navsat-system" name="gz::sim::systems::NavSat"/>
     <plugin filename="gz-sim-forcetorque-system" name="gz::sim::systems::ForceTorque"/>
     <plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact"/>
-    <plugin filename="gz-sim-wind-effects-system" name="gz::sim::systems::WindEffects">
-      <horizontal><magnitude><time_for_rise>1</time_for_rise></magnitude><direction><time_for_rise>1</time_for_rise></direction></horizontal><force_approximation_scaling_factor>0.0118</force_approximation_scaling_factor>
+    <!-- WindEffects REPLACED by DatcomWindForce (2026-07-24): direct physical directional-drag injection
+         F_body_i = 0.5*rho*CdS_i*|Vrel_i|*Vrel_i on base_link (verified 1:1). Wind vector (gz ENU world m/s)
+         streamed to /datcom/wind. WindEffects scalar-K path abandoned (see memory mk7-hover-gust-choshi). -->
+    <plugin filename="DatcomWindForce" name="datcom_wind::DatcomWindForce">
+      <model_name>teTra_mk-7_EM2_0</model_name>
+      <link_name>base_link</link_name>
+      <rho>1.188</rho>
+      <cds_x>0.46</cds_x>
+      <cds_y>5.79</cds_y>
+      <cds_z>23.5</cds_z>
+      <wind_topic>/datcom/wind</wind_topic>
     </plugin>
-    <wind><linear_velocity>0 0 0</linear_velocity></wind>
 </world>
 </sdf>
