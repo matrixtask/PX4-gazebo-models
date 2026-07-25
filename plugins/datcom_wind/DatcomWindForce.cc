@@ -38,6 +38,12 @@ class DatcomWindForce
     if (_sdf->HasElement("cds_x")) this->cds[0] = _sdf->Get<double>("cds_x");
     if (_sdf->HasElement("cds_y")) this->cds[1] = _sdf->Get<double>("cds_y");
     if (_sdf->HasElement("cds_z")) this->cds[2] = _sdf->Get<double>("cds_z");
+    // Optional fixed-wing aero (teTra Mk-7 LS(1)-0417 wing @0deg incidence). Default 0 -> disabled (parasite only).
+    //   lift L = 0.5*rho*CL0*S*Vh^2 along body +z (up), from the horizontal relative wind Vh; this offloads the
+    //   rotors in a steady wind. induced drag Fx = 0.5*rho*CdS_i*|Vrel_x|*Vrel_x adds to the fore-aft parasite.
+    if (_sdf->HasElement("cl0"))    this->cl0    = _sdf->Get<double>("cl0");
+    if (_sdf->HasElement("wing_s")) this->wingS  = _sdf->Get<double>("wing_s");
+    if (_sdf->HasElement("cds_i"))  this->cdsI   = _sdf->Get<double>("cds_i");
     std::string topic = _sdf->HasElement("wind_topic") ? _sdf->Get<std::string>("wind_topic") : std::string("/datcom/wind");
     this->node.Subscribe(topic, &DatcomWindForce::OnWind, this);
     gzmsg << "[DatcomWindForce] model=" << this->modelName << " link=" << this->linkName << " rho=" << this->rho
@@ -83,6 +89,13 @@ class DatcomWindForce
       double v = vrelBody[i];
       fBody[i] = 0.5 * this->rho * this->cds[i] * std::fabs(v) * v;  // signed quadratic drag per body axis
     }
+    if (this->cl0 > 0.0)  // fixed-wing lift + induced drag from the horizontal relative wind
+    {
+      const double vh2 = vrelBody[0] * vrelBody[0] + vrelBody[1] * vrelBody[1];  // horizontal rel-wind^2
+      fBody[2] += 0.5 * this->rho * this->cl0 * this->wingS * vh2;               // wing lift, body +z (up)
+      const double vx = vrelBody[0];
+      fBody[0] += 0.5 * this->rho * this->cdsI * std::fabs(vx) * vx;             // induced drag, along fore-aft
+    }
     gz::math::Vector3d fWorld = pose->Rot() * fBody;
     link.AddWorldForce(_ecm, fWorld);                               // applied once this step (no accumulation)
   }
@@ -99,6 +112,9 @@ class DatcomWindForce
   private: std::string linkName{"base_link"};
   private: double rho{1.188};
   private: double cds[3]{0.46, 5.79, 23.5};
+  private: double cl0{0.0};    // wing CL0 (0 = wing aero disabled)
+  private: double wingS{0.0};  // wing reference area [m^2]
+  private: double cdsI{0.0};   // induced drag area CdS_i [m^2]
   private: gz::math::Vector3d wind{0, 0, 0};
   private: std::mutex mtx;
   private: gz::transport::Node node;

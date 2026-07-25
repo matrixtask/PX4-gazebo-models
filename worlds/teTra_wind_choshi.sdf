@@ -107,9 +107,14 @@
       <model_name>teTra_mk-7_EM2_0</model_name>
       <link_name>base_link</link_name>
       <rho>1.188</rho>
-      <cds_x>0.46</cds_x>
+      <!-- fidelity revision (2026-07-25): cds_x 0.46->0.61 (fus+wing-profile+tail parasite = cruise CD0*S);
+           add LS(1)-0417 wing @0deg: CL0=0.28 (lift 183 kgf @30 m/s, 12% rotor offload) + induced CdS_i=0.066. -->
+      <cds_x>0.61</cds_x>
       <cds_y>5.79</cds_y>
       <cds_z>23.5</cds_z>
+      <cl0>0.28</cl0>
+      <wing_s>12.0</wing_s>
+      <cds_i>0.066</cds_i>
       <wind_topic>/datcom/wind</wind_topic>
     </plugin>
 </world>
