@@ -47,24 +47,18 @@
           </friction>
         </surface>
       </collision>
-      <visual name='fuselage_visual'>
-        <!-- Shortened rear for pusher clearance (see fuselage_collision). 3.8 long, centered x=+0.5. -->
-        <pose>0.5 0 0 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>3.8 0.5 0.45</size>
-          </box>
-        </geometry>
-        <material>
-          <ambient>0.17 0.18 0.20 1</ambient>
-          <diffuse>0.17 0.18 0.20 1</diffuse>
-        </material>
-      </visual>
       <!-- Simple fixed landing gear from CAD: 2.1 m wheelbase, 1.8 m main track, 15 in main wheels. -->
       <collision name='main_landing_gear_left_strut_collision'>
         <pose>-1.10 0.90 -0.380 0 0 0</pose>
         <geometry><box><size>0.080 0.080 0.460</size></box></geometry>
       </collision>
+      <!-- Airframe visual generated from the X-Plane aircraft (Mk7_EM2_Panda.acf + fuselage.obj) by
+           mk7_mission/tools/xplane_to_gazebo.py; aligned on the 12 lift-rotor positions (max error 0.02 m).
+           Visual only: collision, mass and aerodynamics are unchanged. -->
+      <visual name='airframe_xplane_visual'>
+        <geometry><mesh><uri>model://teTra_mk-7_EM2/meshes/airframe_xplane.stl</uri></mesh></geometry>
+        <material><ambient>0.80 0.82 0.85 1</ambient><diffuse>0.80 0.82 0.85 1</diffuse><specular>0.3 0.3 0.3 1</specular></material>
+      </visual>
       <visual name='main_landing_gear_left_strut_visual'>
         <pose>-1.10 0.90 -0.380 0 0 0</pose>
         <geometry><box><size>0.080 0.080 0.460</size></box></geometry>
@@ -126,100 +120,6 @@
         <pose>1.00 0 -0.6476 1.5707963268 0 0</pose>
         <geometry><cylinder><length>0.1800</length><radius>0.1524</radius></cylinder></geometry>
         <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse></material>
-      </visual>
-      <visual name='main_wing_visual'>
-        <pose>-0.135 0 0.730 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>1.500 8.000 0.255</size>
-          </box>
-        </geometry>
-        <material>
-          <ambient>0.24 0.27 0.29 1</ambient>
-          <diffuse>0.24 0.27 0.29 1</diffuse>
-        </material>
-      </visual>
-      <visual name='left_tail_boom_visual'>
-        <pose>-2.789 1.45 0.760 0 0 0</pose>
-        <geometry><box><size>4.708 0.240 0.240</size></box></geometry>
-        <material><ambient>0.14 0.15 0.16 1</ambient>
-          <diffuse>0.14 0.15 0.16 1</diffuse></material>
-      </visual>
-      <visual name='right_tail_boom_visual'>
-        <pose>-2.789 -1.45 0.760 0 0 0</pose>
-        <geometry><box><size>4.708 0.240 0.240</size></box></geometry>
-        <material><ambient>0.14 0.15 0.16 1</ambient>
-          <diffuse>0.14 0.15 0.16 1</diffuse></material>
-      </visual>
-      <visual name='horizontal_tail_visual'>
-        <pose>-5.143 0 0.760 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>0.716 2.900 0.086</size>
-          </box>
-        </geometry>
-        <material>
-          <ambient>0.24 0.27 0.29 1</ambient>
-          <diffuse>0.24 0.27 0.29 1</diffuse>
-        </material>
-      </visual>
-      <visual name='right_vertical_tail_visual'>
-        <pose>-5.503 1.45 0.358 0 0 0</pose>
-        <geometry><box><size>0.720 0.040 0.564</size></box></geometry>
-        <material><ambient>0.24 0.27 0.29 1</ambient><diffuse>0.24 0.27 0.29 1</diffuse></material>
-      </visual>
-      <visual name='left_vertical_tail_visual'>
-        <pose>-5.503 -1.45 0.358 0 0 0</pose>
-        <geometry><box><size>0.720 0.040 0.564</size></box></geometry>
-        <material><ambient>0.24 0.27 0.29 1</ambient><diffuse>0.24 0.27 0.29 1</diffuse></material>
-      </visual>
-      <visual name='left_motor_beam_inner'>
-        <pose>0 1.45 0.760 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>8.30 0.240 0.240</size>
-          </box>
-        </geometry>
-        <material>
-          <ambient>0.09 0.09 0.10 1</ambient>
-          <diffuse>0.09 0.09 0.10 1</diffuse>
-        </material>
-      </visual>
-      <visual name='right_motor_beam_inner'>
-        <pose>0 -1.45 0.760 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>8.30 0.240 0.240</size>
-          </box>
-        </geometry>
-        <material>
-          <ambient>0.09 0.09 0.10 1</ambient>
-          <diffuse>0.09 0.09 0.10 1</diffuse>
-        </material>
-      </visual>
-      <visual name='left_motor_beam_outer'>
-        <pose>0 4.0 0.760 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>4.10 0.240 0.240</size>
-          </box>
-        </geometry>
-        <material>
-          <ambient>0.09 0.09 0.10 1</ambient>
-          <diffuse>0.09 0.09 0.10 1</diffuse>
-        </material>
-      </visual>
-      <visual name='right_motor_beam_outer'>
-        <pose>0 -4.0 0.760 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>4.10 0.240 0.240</size>
-          </box>
-        </geometry>
-        <material>
-          <ambient>0.09 0.09 0.10 1</ambient>
-          <diffuse>0.09 0.09 0.10 1</diffuse>
-        </material>
       </visual>
       <gravity>1</gravity>
       <velocity_decay />
@@ -335,6 +235,7 @@
         <plugin filename="gz-sim-camera-video-recorder-system" name="gz::sim::systems::CameraVideoRecorder">
           <service>/chase/record_video</service>
           <fps>25</fps>
+          <use_sim_time>true</use_sim_time>
         </plugin>
       </sensor>
     </link>
