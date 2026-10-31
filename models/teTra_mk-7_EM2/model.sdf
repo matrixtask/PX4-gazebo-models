@@ -230,11 +230,11 @@
           <clip><near>0.1</near><far>4000</far></clip>
         </camera>
         <always_on>1</always_on>
-        <update_rate>25</update_rate>
+        <update_rate>10</update_rate>
         <topic>chase_cam</topic>
         <plugin filename="gz-sim-camera-video-recorder-system" name="gz::sim::systems::CameraVideoRecorder">
           <service>/chase/record_video</service>
-          <fps>25</fps>
+          <fps>10</fps>
           <use_sim_time>true</use_sim_time>
         </plugin>
       </sensor>
