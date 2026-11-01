@@ -880,6 +880,27 @@
       <cd_plate>1.0</cd_plate>
       <flap_area>0.90</flap_area>
       <baseline_rad>0.61</baseline_rad>
+      <!-- Airframe parasite drag not in the wing/fuselage terms: the route evaluation (optimizer_model_1410)
+           uses CD0 0.0563 on 10.84 m^2 = 0.61 m^2 for the whole aircraft; wing CD0 0.0065 x 12 m^2 = 0.08 m^2 here. -->
+      <base_cda>0.53</base_cda>
+    </plugin>
+
+    <!-- [MOD-5] Pusher advance-ratio model (custom PropellerAero). MulticopterMotorModel gives T = k w^2 at any
+         airspeed: no thrust lapse and no drag from an idling/windmilling propeller. PropellerAero corrects it.
+         J0 4.0: 2.6 kN at 72 m/s at full speed, the cruise thrust of the route evaluation (momentum theory,
+         217.8 kW, eta 0.9). A beta-26 deg fixed-pitch blade at 2383 rpm would reach zero thrust near J 1.3-1.5
+         (0.8-1.4 kN at 72 m/s): pusher sizing is an open risk (R12), not settled by this model.
+         windmill_cd 0.12 on the 2.54 m^2 disk: ~0.95 kN at 72 m/s idle (estimate; R12, replace by test data). -->
+    <plugin filename="PropellerAero" name="PropellerAero">
+      <link_name>base_link</link_name>
+      <joint_name>rotor_12_joint</joint_name>
+      <axis>1 0 0</axis>
+      <motor_constant>0.05557</motor_constant>
+      <rotor_velocity_slowdown_sim>10</rotor_velocity_slowdown_sim>
+      <diameter>1.8</diameter>
+      <zero_thrust_advance_ratio>4.0</zero_thrust_advance_ratio>
+      <windmill_cd>0.12</windmill_cd>
+      <air_density>1.2041</air_density>
     </plugin>
 
     <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController"><joint_name>servo_0</joint_name><sub_topic>servo_0</sub_topic><p_gain>10</p_gain><i_gain>0</i_gain><d_gain>0</d_gain></plugin>
