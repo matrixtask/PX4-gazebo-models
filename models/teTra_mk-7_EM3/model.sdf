@@ -904,6 +904,16 @@
     <!-- [MOD-4] Flaperon/spoiler DRAG term (custom). ADDS drag only; existing CL coefficients unchanged.
          dCdS = cd_plate * flap_area * sin(|delta|) per flaperon (servo_5,servo_6), summed; applied at CoM
          (symmetric up-deflection = pure drag, no roll). User-authorised drag-term addition. -->
+    <!-- Wake-vortex encounter (test only, inactive unless MK7_WAKE is set, see WakeVortex.hpp): strip lift on the
+         wing (8.0 x 1.5 m at wing_fixed, CLa 4.74 from AdvancedLiftDrag, stall ~0.34 rad) and the horizontal tail
+         (2.9 x 0.6 m at htail_fixed). -->
+    <plugin filename="WakeVortex" name="WakeVortex">
+      <link_name>base_link</link_name>
+      <air_density>1.2041</air_density>
+      <strips>16</strips>
+      <surface>-0.135 0.930 8.0 1.5 4.74 1.2</surface>
+      <surface>-4.896 0.960 2.9 0.6 3.5 1.0</surface>
+    </plugin>
     <plugin filename="FlaperonDrag" name="FlaperonDrag">
       <link_name>base_link</link_name>
       <air_density>1.2041</air_density>
