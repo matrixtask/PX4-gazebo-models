@@ -30,7 +30,7 @@
       </inertial>
       <!-- Landing gear (2026-10-29 修正): 車輪位置は設計値 NLG FS 4300 (x=+1.865), MLG FS 6540 (x=-0.375), MLG BL ±911.5。
            重量重心表 @JP シートの FS 4121/6110 はジャッキポイント（車輪ではない）。
-           脚はばね（線形）: 主輪 6.0e4 N/m・前輪 3.0e4 N/m（中井：前回仮値の半分程度）。2026-11-04 から車輪ごとの直動ジョイントで実装（下記）。
+           脚はばね（線形）: 主輪 6.0e4 N/m・前輪 6.0e4 N/m（前輪は 11/04 に 3.0e4 から固く）。2026-11-04 から車輪ごとの直動ジョイントで実装（下記）。
            駐機姿勢で前輪が主輪より 167 mm 低い（実機値）→ 無負荷の前輪は 137 mm 短くモデル化。駐機姿勢 約 -4.3°。 -->
       <!-- Airframe visual generated from the X-Plane aircraft (Mk7_EM2_Panda.acf + fuselage.obj) by
            mk7_mission/tools/xplane_to_gazebo.py; aligned on the 12 lift-rotor positions (max error 0.02 m).
@@ -203,7 +203,7 @@
       </sensor>
     </link>
     <!-- Landing gear springs (2026-11-04, Tasuku: 実機の脚は実機通りの長さ、ただしばね要素で荷重に応じて沈む; values from the
-         Veronte PDI work: main 6.0e4 N/m each, nose 3.0e4 N/m, damping as before). Each wheel is its own 8 kg link on a
+         Veronte PDI work: main 6.0e4 N/m each, nose 3.0e4 N/m, damping as before; 2026-11-04 11:00 Tasuku: nose too soft -> 6.0e4 N/m, damper 9000 N s/m). Each wheel is its own 8 kg link on a
          prismatic joint along the body z axis, sprung by a joint position controller (DART does not apply the ODE contact kp/kd, so the earlier contact
          "springs" were rigid: SITL rested at -3.5 deg = the unloaded geometry). 0 = unloaded, + = compressed (up),
          stroke 0.25 m. The strut collision boxes were removed: once the springs compressed, their lower ends
@@ -303,10 +303,10 @@
       </axis>
     </joint>
     <!-- the spring-damper of this strut: gz-physics/DART did not hold the SDF joint spring_stiffness (the wheels crept
-         up through it), so a joint position controller with target 0 acts as F = -30000 x - 6400 v -->
+         up through it), so a joint position controller with target 0 acts as F = -60000 x - 9000 v -->
     <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
       <joint_name>nose_landing_gear_wheel_spring</joint_name>
-      <p_gain>30000</p_gain><i_gain>0</i_gain><d_gain>6400</d_gain>
+      <p_gain>60000</p_gain><i_gain>0</i_gain><d_gain>9000</d_gain>
       <i_max>0</i_max><i_min>0</i_min><cmd_max>100000</cmd_max><cmd_min>-100000</cmd_min>
       <initial_position>0</initial_position>
     </plugin>
