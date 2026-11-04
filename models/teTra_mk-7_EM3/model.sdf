@@ -18,7 +18,7 @@
              旧値: mass 1293.575, pose (0,0,-0.20)。CA_ROTOR*_PX/PZ は旧重心(0,0,-0.20)基準なので要再計算。 -->
         <pose>0.3456 0.0120 0.0771 0 0 0</pose>
         <!-- 2026-11-01 EM3: 全機 1560 kg（指示値）。差分 +247.8 kg を base_link 重心位置に加算、base_link 慣性は質量比 1.2370 倍（概算）。重心位置は EM2 実測のまま（EM3 実測待ち）。 -->
-        <mass>1293.567</mass>
+        <mass>1269.567</mass>
         <inertia>
           <ixx>7392.5</ixx>
           <ixy>0.000000</ixy>
@@ -30,12 +30,8 @@
       </inertial>
       <!-- Landing gear (2026-10-29 修正): 車輪位置は設計値 NLG FS 4300 (x=+1.865), MLG FS 6540 (x=-0.375), MLG BL ±911.5。
            重量重心表 @JP シートの FS 4121/6110 はジャッキポイント（車輪ではない）。
-           脚はばね（線形）を仮定: 主輪 kp=6.0e4 N/m・前輪 kp=3.0e4 N/m（中井：前回仮値の半分程度）。静的沈み込み 主輪約80 mm・前輪約110 mm。
+           脚はばね（線形）: 主輪 6.0e4 N/m・前輪 3.0e4 N/m（中井：前回仮値の半分程度）。2026-11-04 から車輪ごとの直動ジョイントで実装（下記）。
            駐機姿勢で前輪が主輪より 167 mm 低い（実機値）→ 無負荷の前輪は 137 mm 短くモデル化。駐機姿勢 約 -4.3°。 -->
-      <collision name='main_landing_gear_left_strut_collision'>
-        <pose>-0.375 0.9115 -0.380 0 0 0</pose>
-        <geometry><box><size>0.080 0.080 0.460</size></box></geometry>
-      </collision>
       <!-- Airframe visual generated from the X-Plane aircraft (Mk7_EM2_Panda.acf + fuselage.obj) by
            mk7_mission/tools/xplane_to_gazebo.py; aligned on the 12 lift-rotor positions (max error 0.02 m).
            EM3 shares the EM2 outer shape. Visual only: collision, mass and aerodynamics are unchanged. -->
@@ -48,62 +44,15 @@
         <geometry><box><size>0.080 0.080 0.460</size></box></geometry>
         <material><ambient>0.42 0.43 0.43 1</ambient><diffuse>0.42 0.43 0.43 1</diffuse></material>
       </visual>
-      <collision name='main_landing_gear_right_strut_collision'>
-        <pose>-0.375 -0.9115 -0.380 0 0 0</pose>
-        <geometry><box><size>0.080 0.080 0.460</size></box></geometry>
-      </collision>
       <visual name='main_landing_gear_right_strut_visual'>
         <pose>-0.375 -0.9115 -0.380 0 0 0</pose>
         <geometry><box><size>0.080 0.080 0.460</size></box></geometry>
         <material><ambient>0.42 0.43 0.43 1</ambient><diffuse>0.42 0.43 0.43 1</diffuse></material>
       </visual>
-      <collision name='nose_landing_gear_strut_collision'>
-        <pose>1.865 0 -0.263 0 0 0</pose>
-        <geometry><box><size>0.080 0.080 0.500</size></box></geometry>
-      </collision>
       <visual name='nose_landing_gear_strut_visual'>
         <pose>1.865 0 -0.263 0 0 0</pose>
         <geometry><box><size>0.080 0.080 0.500</size></box></geometry>
         <material><ambient>0.42 0.43 0.43 1</ambient><diffuse>0.42 0.43 0.43 1</diffuse></material>
-      </visual>
-      <collision name='main_landing_gear_left_wheel_collision'>
-        <pose>-0.375 0.9115 -0.6095 1.5707963268 0 0</pose>
-        <geometry><cylinder><length>0.1696</length><radius>0.1905</radius></cylinder></geometry>
-        <surface>
-          <contact><ode><kp>60000</kp><kd>10600</kd><max_vel>0.1</max_vel><min_depth>0.001</min_depth></ode></contact>
-          <friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction>
-        </surface>
-      </collision>
-      <visual name='main_landing_gear_left_wheel_visual'>
-        <pose>-0.375 0.9115 -0.6095 1.5707963268 0 0</pose>
-        <geometry><cylinder><length>0.1696</length><radius>0.1905</radius></cylinder></geometry>
-        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse></material>
-      </visual>
-      <collision name='main_landing_gear_right_wheel_collision'>
-        <pose>-0.375 -0.9115 -0.6095 1.5707963268 0 0</pose>
-        <geometry><cylinder><length>0.1696</length><radius>0.1905</radius></cylinder></geometry>
-        <surface>
-          <contact><ode><kp>60000</kp><kd>10600</kd><max_vel>0.1</max_vel><min_depth>0.001</min_depth></ode></contact>
-          <friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction>
-        </surface>
-      </collision>
-      <visual name='main_landing_gear_right_wheel_visual'>
-        <pose>-0.375 -0.9115 -0.6095 1.5707963268 0 0</pose>
-        <geometry><cylinder><length>0.1696</length><radius>0.1905</radius></cylinder></geometry>
-        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse></material>
-      </visual>
-      <collision name='nose_landing_gear_wheel_collision'>
-        <pose>1.865 0 -0.5106 1.5707963268 0 0</pose>
-        <geometry><cylinder><length>0.1800</length><radius>0.1524</radius></cylinder></geometry>
-        <surface>
-          <contact><ode><kp>30000</kp><kd>6400</kd><max_vel>0.1</max_vel><min_depth>0.001</min_depth></ode></contact>
-          <friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction>
-        </surface>
-      </collision>
-      <visual name='nose_landing_gear_wheel_visual'>
-        <pose>1.865 0 -0.5106 1.5707963268 0 0</pose>
-        <geometry><cylinder><length>0.1800</length><radius>0.1524</radius></cylinder></geometry>
-        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse></material>
       </visual>
       <gravity>1</gravity>
       <velocity_decay />
@@ -253,6 +202,114 @@
         </plugin>
       </sensor>
     </link>
+    <!-- Landing gear springs (2026-11-04, Tasuku: 実機の脚は実機通りの長さ、ただしばね要素で荷重に応じて沈む; values from the
+         Veronte PDI work: main 6.0e4 N/m each, nose 3.0e4 N/m, damping as before). Each wheel is its own 8 kg link on a
+         prismatic joint along the body z axis, sprung by a joint position controller (DART does not apply the ODE contact kp/kd, so the earlier contact
+         "springs" were rigid: SITL rested at -3.5 deg = the unloaded geometry). 0 = unloaded, + = compressed (up),
+         stroke 0.25 m. The strut collision boxes were removed: once the springs compressed, their lower ends
+         reached the ground and carried the load rigidly. Static EM3 (1560 kg, CG x +0.346): main ~86 mm, nose ~164 mm -> parked about -5.5 deg. -->
+    <link name='main_landing_gear_left_wheel'>
+      <pose>-0.375 0.9115 -0.6095 0 0 0</pose>
+      <inertial><mass>8.0</mass><inertia><ixx>0.08</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.14</iyy><iyz>0</iyz><izz>0.08</izz></inertia></inertial>
+      <collision name='main_landing_gear_left_wheel_collision'>
+        <pose>0 0 0 1.5707963268 0 0</pose>
+        <geometry><cylinder><length>0.1696</length><radius>0.1905</radius></cylinder></geometry>
+        <surface>
+          <contact><ode><kp>1000000</kp><kd>100</kd><max_vel>0.1</max_vel><min_depth>0.001</min_depth></ode></contact>
+          <friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction>
+        </surface>
+      </collision>
+      <visual name='main_landing_gear_left_wheel_visual'>
+        <pose>0 0 0 1.5707963268 0 0</pose>
+        <geometry><cylinder><length>0.1696</length><radius>0.1905</radius></cylinder></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse></material>
+      </visual>
+    </link>
+    <joint name='main_landing_gear_left_wheel_spring' type='prismatic'>
+      <parent>base_link</parent>
+      <child>main_landing_gear_left_wheel</child>
+      <axis>
+        <xyz expressed_in="__model__">0 0 1</xyz>
+        <limit><lower>0</lower><upper>0.25</upper><effort>1e6</effort><velocity>10</velocity></limit>
+        <dynamics><damping>0</damping><spring_reference>0</spring_reference><spring_stiffness>0</spring_stiffness></dynamics>
+      </axis>
+    </joint>
+    <!-- the spring-damper of this strut: gz-physics/DART did not hold the SDF joint spring_stiffness (the wheels crept
+         up through it), so a joint position controller with target 0 acts as F = -60000 x - 10600 v -->
+    <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+      <joint_name>main_landing_gear_left_wheel_spring</joint_name>
+      <p_gain>60000</p_gain><i_gain>0</i_gain><d_gain>10600</d_gain>
+      <i_max>0</i_max><i_min>0</i_min><cmd_max>100000</cmd_max><cmd_min>-100000</cmd_min>
+      <initial_position>0</initial_position>
+    </plugin>
+    <link name='main_landing_gear_right_wheel'>
+      <pose>-0.375 -0.9115 -0.6095 0 0 0</pose>
+      <inertial><mass>8.0</mass><inertia><ixx>0.08</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.14</iyy><iyz>0</iyz><izz>0.08</izz></inertia></inertial>
+      <collision name='main_landing_gear_right_wheel_collision'>
+        <pose>0 0 0 1.5707963268 0 0</pose>
+        <geometry><cylinder><length>0.1696</length><radius>0.1905</radius></cylinder></geometry>
+        <surface>
+          <contact><ode><kp>1000000</kp><kd>100</kd><max_vel>0.1</max_vel><min_depth>0.001</min_depth></ode></contact>
+          <friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction>
+        </surface>
+      </collision>
+      <visual name='main_landing_gear_right_wheel_visual'>
+        <pose>0 0 0 1.5707963268 0 0</pose>
+        <geometry><cylinder><length>0.1696</length><radius>0.1905</radius></cylinder></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse></material>
+      </visual>
+    </link>
+    <joint name='main_landing_gear_right_wheel_spring' type='prismatic'>
+      <parent>base_link</parent>
+      <child>main_landing_gear_right_wheel</child>
+      <axis>
+        <xyz expressed_in="__model__">0 0 1</xyz>
+        <limit><lower>0</lower><upper>0.25</upper><effort>1e6</effort><velocity>10</velocity></limit>
+        <dynamics><damping>0</damping><spring_reference>0</spring_reference><spring_stiffness>0</spring_stiffness></dynamics>
+      </axis>
+    </joint>
+    <!-- the spring-damper of this strut: gz-physics/DART did not hold the SDF joint spring_stiffness (the wheels crept
+         up through it), so a joint position controller with target 0 acts as F = -60000 x - 10600 v -->
+    <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+      <joint_name>main_landing_gear_right_wheel_spring</joint_name>
+      <p_gain>60000</p_gain><i_gain>0</i_gain><d_gain>10600</d_gain>
+      <i_max>0</i_max><i_min>0</i_min><cmd_max>100000</cmd_max><cmd_min>-100000</cmd_min>
+      <initial_position>0</initial_position>
+    </plugin>
+    <link name='nose_landing_gear_wheel'>
+      <pose>1.865 0 -0.5106 0 0 0</pose>
+      <inertial><mass>8.0</mass><inertia><ixx>0.08</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.14</iyy><iyz>0</iyz><izz>0.08</izz></inertia></inertial>
+      <collision name='nose_landing_gear_wheel_collision'>
+        <pose>0 0 0 1.5707963268 0 0</pose>
+        <geometry><cylinder><length>0.1800</length><radius>0.1524</radius></cylinder></geometry>
+        <surface>
+          <contact><ode><kp>1000000</kp><kd>100</kd><max_vel>0.1</max_vel><min_depth>0.001</min_depth></ode></contact>
+          <friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction>
+        </surface>
+      </collision>
+      <visual name='nose_landing_gear_wheel_visual'>
+        <pose>0 0 0 1.5707963268 0 0</pose>
+        <geometry><cylinder><length>0.1800</length><radius>0.1524</radius></cylinder></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse></material>
+      </visual>
+    </link>
+    <joint name='nose_landing_gear_wheel_spring' type='prismatic'>
+      <parent>base_link</parent>
+      <child>nose_landing_gear_wheel</child>
+      <axis>
+        <xyz expressed_in="__model__">0 0 1</xyz>
+        <limit><lower>0</lower><upper>0.25</upper><effort>1e6</effort><velocity>10</velocity></limit>
+        <dynamics><damping>0</damping><spring_reference>0</spring_reference><spring_stiffness>0</spring_stiffness></dynamics>
+      </axis>
+    </joint>
+    <!-- the spring-damper of this strut: gz-physics/DART did not hold the SDF joint spring_stiffness (the wheels crept
+         up through it), so a joint position controller with target 0 acts as F = -30000 x - 6400 v -->
+    <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+      <joint_name>nose_landing_gear_wheel_spring</joint_name>
+      <p_gain>30000</p_gain><i_gain>0</i_gain><d_gain>6400</d_gain>
+      <i_max>0</i_max><i_min>0</i_min><cmd_max>100000</cmd_max><cmd_min>-100000</cmd_min>
+      <initial_position>0</initial_position>
+    </plugin>
 
     <!-- H4T130 motor (13.2 kg) + ESC (2.3 kg) masses. ESC position is assumed colocated with the motor. -->
     <link name='motor_esc_0'>
